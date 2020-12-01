@@ -46,11 +46,21 @@ from multiprocessing import Pool, Process
 import multiprocessing as mp
 import time
 
+def grad_desc():
+    for i in range(epochs):
+        Y_pred = a*X*X + b*X + c
+        D_a = (-2/n) * sum(X*X * (Y - Y_pred))
+        D_b = (-2/n) * sum(X * (Y - Y_pred))
+        D_c = (-2/n) * sum(Y - Y_pred)
+        a = a - L * D_a
+        b = b - L *D_b
+        c = c - L * D_C
+
 if __name__ == '__main__':
     initialt = time.time()
     actions = []
     for i in range(0,2):#2cores, 1 processor
-        proc = mp.Process(target = f, args = (0, 0, 0, X[i], Y[i], .0001, 10000)) #learning rate and epoch
+        proc = mp.Process(target = grad_desc, args = (0, 0, 0, X[i], Y[i], .0001, 10000)) #learning rate and epoch
         actions.append(proc)
         proc.start()
         
@@ -58,7 +68,7 @@ if __name__ == '__main__':
         action.join()
 
 
-print('The total runtime is {} seconds'.format(time.time() - initialt))
+print('The total runtime for multiprocessing is {} seconds'.format(time.time() - initialt))
  
 ###2 Multithreading
 import threading
@@ -66,14 +76,14 @@ if __name__ == '__main__':
     initial_thread = time.time()
     actions = []
     for i in range(0,2):#2cores, 1 processor
-        proc_t = threading.Thread(target = f, args = (0, 0, 0, X[i], Y[i], .0001, 10000)) #learning rate and epoch
+        proc_t = threading.Thread(target = grad_desc, args = (0, 0, 0, X[i], Y[i], .0001, 10000)) #learning rate and epoch
         actions.append(proc_t)
         proc_t.start()
         
     for action in actions:
         action.join()
 
-print('The total runtime is {} seconds'.format(time.time() - initial_thread))
+print('The total runtime for multithreading is {} seconds'.format(time.time() - initial_thread))
 
 ###3 MPI4Py
 
@@ -86,13 +96,22 @@ size = comm.Get_size()
 df = data.to_numpy() #df to numpy array
 startt = time.time()
 
+for i in range(epochs): 
+    Y_pred = a*X*X + b*X + c  # The current predicted value of Y
+    D_a = (-2/n) * sum(X*X * (Y - Y_pred))  # Derivative wrt a
+    D_b = (-2/n) * sum(X * (Y - Y_pred))  # Derivative wrt b
+    D_c = (-2/n) * sum(Y - Y_pred)  # Derivative wrt c
+    a = a - L * D_a  # Update a
+    b = b - L * D_b  # Update b
+    c = c - L * D_c  # Update c
+
 if rank == 0:
     df = data.to_numpy()
 else:
     df = None
 comm.Bcast(df, root=0)
 
-print('The total runtime is {} seconds'.format(time.time() - startt))
+print('The total runtime for MPI is {} seconds'.format(time.time() - startt))
 
 
     
